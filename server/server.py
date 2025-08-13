@@ -1,9 +1,11 @@
 from fastapi import FastAPI, File, UploadFile
+from fastapi.staticfiles import StaticFiles
 import uuid
 import os
 os.makedirs("uploads", exist_ok=True)
 
 app = FastAPI()
+app.mount("/", StaticFiles(directory="../client/dist", html=True), name="static")
 
 
 @app.post("/upload")

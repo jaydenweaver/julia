@@ -1,12 +1,24 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI  # , File, UploadFile
 from fastapi.staticfiles import StaticFiles
-import uuid
+# import uuid
 import os
-import numpy as np
+# import numpy as np
 import hashlib
 import requests
 
 os.makedirs("images", exist_ok=True)
+
+
+users = {
+    'user': {
+        'username': 'user',
+        'password': 'pass'
+    },
+    'admin': {
+        'username': 'admin',
+        'password': 'pass'
+    }
+}
 
 
 def get_time(country, city):
@@ -51,11 +63,13 @@ def generate_julia_constants(country, city):
 
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="../client/dist", html=True),
-          name="static")
 
 
 @app.get("/time")
 async def time_json():
     val = generate_julia_constants('Australia', 'Brisbane')
     return {'constant_one': val[0], 'constant_two': val[1]}
+
+
+app.mount("/", StaticFiles(directory="../client/dist", html=True),
+          name="static")

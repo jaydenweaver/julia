@@ -50,9 +50,9 @@ def hash_tuple(vals):
 
 
 # maps hash_tuple (256bit ints) to a range between -1.5, 1.5
-def hash_to_julia_constant(val):
-    norm_a = val[0] / (2**256 - 1)
-    norm_b = val[1] / (2**256 - 1)
+def hash_to_julia_constant(vals):
+    norm_a = vals[0] / (2**256 - 1)
+    norm_b = vals[1] / (2**256 - 1)
     return -1.5 + norm_a * (1.5 - (-1.5)), -1.5 + norm_b * (1.5 - (-1.5))
 
 

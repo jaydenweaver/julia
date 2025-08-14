@@ -9,15 +9,16 @@ import requests
 os.makedirs("images", exist_ok=True)
 
 
-def get_time(timezone):
-    url = f"http://worldclockapi.com/api/json/{timezone}/now"
+def get_time(country, city):
+    url = f"https://timeapi.io/api/time/current/zone?timeZone={
+        country}%2F{city}"
     print(url)
     try:
         res = requests.get(url, timeout=5)
         res.raise_for_status()
         data = res.json()
         print(data)
-        return data['currentDateTime'], data['ordinalDate']
+        return data['date'], data['time']
     except requests.RequestException as e:
         print(f"api request failed: {e}")
     return None
@@ -42,8 +43,8 @@ def hash_to_julia_constant(val):
     return -1.5 + norm_a * (1.5 - (-1.5)), -1.5 + norm_b * (1.5 - (-1.5))
 
 
-def generate_julia_constants(timezone):
-    val = get_time(timezone)
+def generate_julia_constants(country, city):
+    val = get_time(country, city)
     if val is None:
         val = (0, 0)
     return hash_to_julia_constant(hash_tuple(val))
@@ -56,5 +57,5 @@ app.mount("/static", StaticFiles(directory="../client/dist", html=True),
 
 @app.get("/time")
 async def time_json():
-    val = generate_julia_constants('utc')
+    val = generate_julia_constants('Australia', 'Brisbane')
     return {'constant_one': val[0], 'constant_two': val[1]}

@@ -45,7 +45,7 @@ def hash_to_julia_constant(vals):
 async def generate_julia_constants(country, city):
     val = await get_time(country, city)
     if val is None:
-        val = (0, 0)
+        return (-0.7, -0.26)
     return hash_to_julia_constant(hash_tuple(val))
 
 

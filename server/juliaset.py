@@ -49,12 +49,14 @@ async def generate_julia_constants(country, city):
     return hash_to_julia_constant(hash_tuple(val))
 
 
-async def generate_julia_image(country, city,
-                               size=(1500, 1000),
+async def generate_julia_image(country="", city="",
+                               size=(2500, 1250),
                                center=(0.0, 0.0),
                                zoom=1.0,
-                               max_iter=500):
-    a, b = await generate_julia_constants(country, city)
+                               max_iter=1000):
+    a, b = (-0.7, -0.26)
+    if country != "":
+        a, b = await generate_julia_constants(country, city)
     print(f"a: {a}, b: {b}")
     w, h = size
     half_x = 1.5 / zoom

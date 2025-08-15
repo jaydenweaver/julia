@@ -28,7 +28,7 @@ app = FastAPI()
 
 @app.get("/time/{country}/{city}")
 async def get_julia_image(country: str, city: str):
-    img = await generate_julia_image(country, city)
+    img = await generate_julia_image()
     if img is None:
         return {'works': 'None'}
     file_path = "julia.png"

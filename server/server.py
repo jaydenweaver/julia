@@ -1,14 +1,15 @@
-from fastapi import FastAPI  # , File, UploadFile
-from fastapi.staticfiles import StaticFiles
+from fastapi import FastAPI
 from fastapi.responses import FileResponse
-# import uuid
+import uuid
 import os
-# import httpx
-from juliaset import generate_julia_image
-from PIL import Image
+import shutil
+from juliaset import create_julia_image
 
+save_dir = "images"
 
-os.makedirs("images", exist_ok=True)
+# delete old images...
+shutil.rmtree(save_dir)
+os.makedirs(save_dir, exist_ok=True)
 
 
 users = {
@@ -28,9 +29,11 @@ app = FastAPI()
 
 @app.get("/time/{country}/{city}")
 async def get_julia_image_time(country: str, city: str):
-    img = await generate_julia_image(country=country, city=city)
+    img = await create_julia_image(country=country, city=city)
     if img is None:
         return {'works': 'None'}
-    file_path = "julia.png"
+    unique_id = str(uuid.uuid4())
+    file_name = f"{unique_id}_{country}_{city}.png"
+    file_path = os.path.join(save_dir, file_name)
     img.save(file_path)
     return FileResponse(file_path, media_type="image/png")

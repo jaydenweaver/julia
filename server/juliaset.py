@@ -61,7 +61,7 @@ def hash_to_julia_constant(vals):
         return -0.7, 0.27015
 
 
-async def generate_julia_constants(country, city):
+async def map_to_julia_constants(country, city):
     val = await get_time(country, city)
     if val is None:
         return (-0.7, 0.27015)
@@ -71,14 +71,14 @@ async def generate_julia_constants(country, city):
     return a, b
 
 
-async def generate_julia_image(country="", city="",
-                               size=(2500, 1250),
-                               center=(0.0, 0.0),
-                               zoom=1.0,
-                               max_iter=1000):
+async def create_julia_image(country="", city="",
+                             size=(2500, 1250),
+                             center=(0.0, 0.0),
+                             zoom=1.0,
+                             max_iter=1000):
     a, b = (-0.7, -0.26)
     if country != "":
-        a, b = await generate_julia_constants(country, city)
+        a, b = await map_to_julia_constants(country, city)
     print(f"a: {a}, b: {b}")
 
     w, h = size

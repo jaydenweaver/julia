@@ -9,6 +9,8 @@ with open("sets.json", "r") as f:
     julia_constants = json.load(f)
 
 
+# available time zones available at
+# https://timeapi.io/documentation/iana-timezones
 async def get_time(country, city):
     url = f"https://timeapi.io/api/time/current/zone?timeZone={
         country}%2F{city}"

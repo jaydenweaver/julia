@@ -3,6 +3,10 @@ from PIL import Image
 import httpx
 import hashlib
 import matplotlib.cm as cm
+import json
+
+with open("sets.json", "r") as f:
+    julia_constants = json.load(f)
 
 
 async def get_time(country, city):
@@ -33,20 +37,38 @@ def hash_tuple(vals):
     return (hash_a, hash_b)
 
 
-# maps hash_tuple (256bit ints) to a range between -1.5, 1.5
+def is_interesting(c, max_iter=30):
+    z = 0
+    for _ in range(max_iter):
+        z = z*z + c
+        if abs(z) > 2:
+            return False
+    return True
+
+
 def hash_to_julia_constant(vals):
-    range = 0.4
     norm_a = vals[0] / (2**256 - 1)
     norm_b = vals[1] / (2**256 - 1)
-    return -range + norm_a * (range - (-range)), \
-        -range + norm_b * (range - (-range))
+
+    real = -1.5 + norm_a * 2.5  # [-1.5, 1.0]
+    imaginary = -1.25 + norm_b * 2.5  # [-1.25, 1.25]
+
+    c = complex(real, imaginary)
+
+    if is_interesting(c):
+        return real, imaginary
+    else:
+        return -0.7, 0.27015
 
 
 async def generate_julia_constants(country, city):
     val = await get_time(country, city)
     if val is None:
-        return (-0.7, -0.26)
-    return hash_to_julia_constant(hash_tuple(val))
+        return (-0.7, 0.27015)
+    hash_vals = hash_tuple(val)
+    i = (hash_vals[0] & hash_vals[1] % len(julia_constants))
+    a, b = julia_constants[i]["a"], julia_constants[i]["b"]
+    return a, b
 
 
 async def generate_julia_image(country="", city="",
@@ -58,6 +80,7 @@ async def generate_julia_image(country="", city="",
     if country != "":
         a, b = await generate_julia_constants(country, city)
     print(f"a: {a}, b: {b}")
+
     w, h = size
     half_x = 1.5 / zoom
     half_y = (h / w) * half_x

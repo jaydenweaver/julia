@@ -27,13 +27,10 @@ app = FastAPI()
 
 
 @app.get("/time/{country}/{city}")
-async def get_julia_image(country: str, city: str):
-    img = await generate_julia_image()
+async def get_julia_image_time(country: str, city: str):
+    img = await generate_julia_image(country=country, city=city)
     if img is None:
         return {'works': 'None'}
     file_path = "julia.png"
     img.save(file_path)
     return FileResponse(file_path, media_type="image/png")
-
-app.mount("/", StaticFiles(directory="../client/dist", html=True),
-          name="static")

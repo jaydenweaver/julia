@@ -39,6 +39,7 @@ async def get_julia_image_time(country: str, city: str):
     if key in julia_cache:
         file_path = julia_cache[key]
         if os.path.exists(file_path):
+            print(f"returning cached image! {file_path}")
             return FileResponse(file_path, media_type="image/png")
         else:
             del julia_cache[key]

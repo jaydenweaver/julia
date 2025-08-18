@@ -39,30 +39,6 @@ def hash_tuple(vals):
     return (hash_a, hash_b)
 
 
-def is_interesting(c, max_iter=30):
-    z = 0
-    for _ in range(max_iter):
-        z = z*z + c
-        if abs(z) > 2:
-            return False
-    return True
-
-
-def hash_to_julia_constant(vals):
-    norm_a = vals[0] / (2**256 - 1)
-    norm_b = vals[1] / (2**256 - 1)
-
-    real = -1.5 + norm_a * 2.5  # [-1.5, 1.0]
-    imaginary = -1.25 + norm_b * 2.5  # [-1.25, 1.25]
-
-    c = complex(real, imaginary)
-
-    if is_interesting(c):
-        return real, imaginary
-    else:
-        return -0.7, 0.27015
-
-
 async def map_to_julia_constants(country, city):
     val = await get_time(country, city)
     if val is None:

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Query
 from fastapi.responses import FileResponse
 import os
 import shutil
@@ -19,11 +19,15 @@ julia_cache = {}
 app = FastAPI()
 
 
-@app.get("/time/{country}/{city}")
-async def get_julia_image_time(country: str, city: str):
+@app.get("/time")
+async def get_julia_image_time(
+        country: str = Query(...),
+        city: str = Query(...),
+        size: str = Query(...)
+):
     # get cache key
     time_key = datetime.utcnow().strftime("%Y-%m-%d-%H-%M")
-    key = (country.lower(), city.lower(), time_key)
+    key = (country.lower(), city.lower(), size.lower(), time_key)
 
     # check if we already have the request in cache
     if key in julia_cache:
@@ -34,7 +38,7 @@ async def get_julia_image_time(country: str, city: str):
         else:
             del julia_cache[key]
 
-    img = await create_julia_image(country=country, city=city)
+    img = await create_julia_image(country=country, city=city, size=size)
     if img is None:
         return {'image creation failed'}
 

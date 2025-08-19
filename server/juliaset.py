@@ -49,16 +49,27 @@ async def map_to_julia_constants(country, city):
 
 
 async def create_julia_image(country="", city="",
-                             size=(2500, 1250),
+                             size="",
                              center=(0.0, 0.0),
                              zoom=1.0,
                              max_iter=1000):
     a, b = (-0.7, -0.26)
+    w, h = (2500, 1250)
     if country != "":
         a, b = await map_to_julia_constants(country, city)
-    print(f"a: {a}, b: {b}")
 
-    w, h = size
+    match size:
+        case "s":
+            w, h = (1000, 563)
+        case "m":
+            w, h = (2000, 1125)
+        case "l":
+            w, h = (3000, 1688)
+        case "xl":
+            w, h = (4000, 2250)
+        case "xxl":
+            w, h = (5000, 2813)
+
     half_x = 1.5 / zoom
     half_y = (h / w) * half_x
 

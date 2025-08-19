@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Query
+from fastapi import FastAPI, Request, Query, Depends
 from fastapi.responses import FileResponse
 import os
 import shutil
@@ -23,8 +23,20 @@ app = FastAPI()
 async def get_julia_image_time(
         country: str = Query(...),
         city: str = Query(...),
-        size: str = Query(...)
+        size: str = Query(...),
+        user=Depends(auth.optional_auth)
 ):
+
+    # check if user has access level for given size
+    # just hard coded for now...
+    if size == 'xl':
+        if not user or user['username'] != 'admin':
+            return {'invalid permissions'}
+
+    # only users can request large
+    if size == 'l' and not user:
+        return {'invalid permissions'}
+
     # get cache key
     time_key = datetime.utcnow().strftime("%Y-%m-%d-%H-%M")
     key = (country.lower(), city.lower(), size.lower(), time_key)

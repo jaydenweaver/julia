@@ -46,6 +46,12 @@ def authenticate_token(credentials: HTTPAuthorizationCredentials = Depends(secur
         raise HTTPException(status_code=401, detail='Invalid token')
 
 
+async def optional_auth(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer(auto_error=False))):
+    if credentials:
+        return authenticate_token(credentials)
+    return None
+
+
 async def login(request: Request):
     data = await request.json()
     username = data.get('username')

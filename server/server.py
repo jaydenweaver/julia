@@ -1,20 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
 import os
 import shutil
 from juliaset import create_julia_image
 from datetime import datetime
+import auth
 
-users = {
-    'user': {
-        'username': 'user',
-        'password': 'pass'
-    },
-    'admin': {
-        'username': 'admin',
-        'password': 'pass'
-    }
-}
 
 save_dir = "images"
 
@@ -53,3 +44,8 @@ async def get_julia_image_time(country: str, city: str):
     julia_cache[key] = file_path  # store in cache
 
     return FileResponse(file_path, media_type="image/png")
+
+
+@app.post("/login")
+async def login(Request: Request):
+    return await auth.login(Request)

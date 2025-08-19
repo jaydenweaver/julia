@@ -4,6 +4,7 @@ import httpx
 import hashlib
 import matplotlib.cm as cm
 import json
+from functools import lru_cache
 
 with open("sets.json", "r") as f:
     julia_constants = json.load(f)
@@ -48,27 +49,34 @@ async def map_to_julia_constants(country, city):
     return a, b
 
 
+@lru_cache(maxsize=None)
+def get_size_dimensions(size: str):
+    size_map = {
+        "s": (1000, 563),
+        "m": (2000, 1125),
+        "l": (3000, 1688),
+        "xl": (4000, 2250),
+        "xxl": (5000, 2813),
+        "verybig": (8000, 4500),
+    }
+    return size_map.get(size.lower())
+
+
 async def create_julia_image(country="", city="",
                              size="",
                              center=(0.0, 0.0),
                              zoom=1.0,
                              max_iter=1000):
-    a, b = (-0.7, -0.26)
-    w, h = (2500, 1250)
-    if country != "":
-        a, b = await map_to_julia_constants(country, city)
+    ab = await map_to_julia_constants(country, city)
+    if ab is None:
+        return None
+    a, b = ab
 
-    match size:
-        case "s":
-            w, h = (1000, 563)
-        case "m":
-            w, h = (2000, 1125)
-        case "l":
-            w, h = (3000, 1688)
-        case "xl":
-            w, h = (4000, 2250)
-        case "xxl":
-            w, h = (5000, 2813)
+    wh = get_size_dimensions(size)
+    if wh is None:
+        print(f"invalid size '{size}'! using default size: m")
+        wh = (2000, 1125)
+    w, h = wh
 
     half_x = 1.5 / zoom
     half_y = (h / w) * half_x

@@ -1,18 +1,9 @@
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
-import uuid
 import os
 import shutil
 from juliaset import create_julia_image
 from datetime import datetime
-
-save_dir = "images"
-
-# delete old images...
-shutil.rmtree(save_dir)
-os.makedirs(save_dir, exist_ok=True)
-
-julia_cache = {}
 
 users = {
     'user': {
@@ -24,6 +15,14 @@ users = {
         'password': 'pass'
     }
 }
+
+save_dir = "images"
+
+# delete old images...
+shutil.rmtree(save_dir)
+os.makedirs(save_dir, exist_ok=True)
+
+julia_cache = {}
 
 
 app = FastAPI()

@@ -35,7 +35,6 @@ def hash_tuple(vals):
     seed = f"{vals[0]}_{vals[1]}_second"
     hash_bytes = hashlib.sha256(seed.encode('utf-8')).digest()
     hash_b = int.from_bytes(hash_bytes, "big")
-    print(f"hash tuple: {hash_a}, {hash_b}")
     return (hash_a, hash_b)
 
 

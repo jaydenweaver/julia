@@ -2,6 +2,7 @@
 node_modules/
 uploads/
 __pycache__/
+images/
 
 # Build output
 dist/

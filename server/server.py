@@ -11,8 +11,6 @@ save_dir = "images"
 shutil.rmtree(save_dir)
 os.makedirs(save_dir, exist_ok=True)
 
-julia_cache = {}
-
 
 app = FastAPI()
 

@@ -1,6 +1,5 @@
-from fastapi import Query, Depends
+from fastapi import Query
 from fastapi.responses import FileResponse
-from auth import optional_auth
 from datetime import datetime
 from juliaset import create_julia_image
 import os
@@ -13,7 +12,7 @@ async def get_julia_image_time(
         country: str = Query(...),
         city: str = Query(...),
         size: str = Query(...),
-        user=Depends(optional_auth),
+        user=None,
         save_dir="images"
 ):
 

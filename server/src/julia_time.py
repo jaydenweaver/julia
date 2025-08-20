@@ -1,7 +1,7 @@
 from fastapi import Query
 from fastapi.responses import FileResponse
 from datetime import datetime
-from juliaset import create_julia_image
+from src.juliaset import create_julia_image
 import os
 
 

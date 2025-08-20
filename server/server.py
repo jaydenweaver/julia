@@ -1,8 +1,8 @@
 from fastapi import FastAPI, Request, Query, Depends
 import os
 import shutil
-import auth
-import julia_time
+from src import auth
+from src import julia_time
 
 
 save_dir = "images"

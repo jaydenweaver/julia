@@ -34,7 +34,8 @@ async def get_julia_image_time(
         user=Depends(auth.optional_auth)
 ):
     return await julia_time.get_julia_image_time(country, city,
-                                                 size, user, SAVE_DIR)
+                                                 size, user,
+                                                 SAVE_DIR, METADATA_FILE)
 
 
 @app.post("/login")

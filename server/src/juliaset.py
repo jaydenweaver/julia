@@ -1,10 +1,15 @@
 import numpy as np
+from collections import namedtuple
 from PIL import Image
 import httpx
 import hashlib
 import matplotlib.cm as cm
 import json
 from functools import lru_cache
+
+julia_res = namedtuple(
+    "julia_res", ["image", "real", "imaginary",
+                  "iters", "width", "height"])
 
 with open("sets.json", "r") as f:
     julia_constants = json.load(f)
@@ -105,4 +110,9 @@ async def create_julia_image(country="", city="",
     colored_img = cm.inferno(norm_iters)[:, :, :3]  # RGB from colormap
     colored_img = (colored_img * 255).astype(np.uint8)
 
-    return Image.fromarray(colored_img)
+    return julia_res(
+        image=Image.fromarray(colored_img),
+        real=float(a), imaginary=float(b),
+        iters=max_iter,
+        width=w,
+        height=h)

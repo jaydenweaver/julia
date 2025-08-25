@@ -1,11 +1,21 @@
 from fastapi import Query
 from fastapi.responses import FileResponse
 from datetime import datetime
-from src.juliaset import create_julia_image
+from src.juliaset import create_julia_image, julia_res
 import os
-
+import json
 
 julia_cache = {}
+
+
+def save_metadata(file: str, entry: dict):
+    with open(file, "r+") as f:
+        data = json.load(f)
+        data["fractals"].append(entry)
+
+        f.seek(0)
+        json.dump(data, f, indent=4)
+        f.truncate()
 
 
 async def get_julia_image_time(
@@ -14,7 +24,7 @@ async def get_julia_image_time(
         size: str = Query(...),
         user=None,
         save_dir="images",
-        metadata="metadata.json"
+        metadata_file="metadata.json"
 ):
 
     # check if user has access level for given size
@@ -41,13 +51,27 @@ async def get_julia_image_time(
         else:
             del julia_cache[key]
 
-    img = await create_julia_image(country=country, city=city, size=size)
-    if img is None:
+    req = await create_julia_image(country=country, city=city, size=size)
+    if req is None:
         return {'image creation failed'}
 
     file_name = f"{key}.png"
     file_path = os.path.join(save_dir, file_name)
-    img.save(file_path)
+    req.image.save(file_path)
     julia_cache[key] = file_path  # store in cache
+
+    metadata = {
+        "region": country,  # need to rename country to region...
+        "city": city,
+        "size": size,
+        "resolution": {"width": req.width,
+                       "height": req.height},
+        "params": {"real": req.real,
+                   "imaginary": req.imaginary,
+                   "iterations": req.iters},
+        "file_name": file_name,
+        "generated_at": datetime.now().isoformat()
+    }
+    save_metadata(metadata_file, metadata)
 
     return FileResponse(file_path, media_type="image/png")

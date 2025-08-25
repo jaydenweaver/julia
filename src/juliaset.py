@@ -67,11 +67,11 @@ def get_size_dimensions(size: str):
     return size_map.get(size.lower())
 
 
-async def create_julia_image(country="", city="",
-                             size="",
+async def create_julia_image(country="", city="", size="m",
                              center=(0.0, 0.0),
                              zoom=1.0,
                              max_iter=1000):
+
     ab = await map_to_julia_constants(country, city)
     if ab is None:
         return None
@@ -79,7 +79,6 @@ async def create_julia_image(country="", city="",
 
     wh = get_size_dimensions(size)
     if wh is None:
-        print(f"invalid size '{size}'! using default size: m")
         wh = (2000, 1125)
     w, h = wh
 
@@ -87,32 +86,39 @@ async def create_julia_image(country="", city="",
     half_y = (h / w) * half_x
 
     x = np.linspace(center[0] - half_x, center[0] +
-                    half_x, w, dtype=np.float64)
+                    half_x, w, dtype=np.float32)
     y = np.linspace(center[1] - half_y, center[1] +
-                    half_y, h, dtype=np.float64)
-    X, Y = np.meshgrid(x, y)
-    Z0 = X + 1j * Y
-    C = complex(a, b)
+                    half_y, h, dtype=np.float32)
 
-    Z = Z0.copy()
-    iters = np.zeros(Z.shape, dtype=np.uint16)
-    alive = np.ones(Z.shape, dtype=bool)
+    # preallocate result array
+    iters = np.zeros((h, w), dtype=np.uint16)
+    C = np.complex64(complex(a, b))
 
-    for i in range(max_iter):
-        Z[alive] = Z[alive] * Z[alive] + C
-        escaped = np.greater(np.abs(Z), 2.0, where=alive)
-        iters[escaped & alive] = i
-        alive &= ~escaped
-        if not alive.any():
-            break
+    for j, y_val in enumerate(y):
+        # row-wise computation to save memory
+        Z_row = x + 1j * np.float32(y_val)
+        Z_row = Z_row.astype(np.complex64)
+        alive = np.ones(w, dtype=bool)
+        iters_row = np.zeros(w, dtype=np.uint16)
+
+        for i in range(max_iter):
+            Z_row[alive] = Z_row[alive] * Z_row[alive] + C
+            escaped = np.abs(Z_row) > 2.0
+            iters_row[escaped & alive] = i
+            alive &= ~escaped
+            if not alive.any():
+                break
+
+        iters[j, :] = iters_row
 
     norm_iters = iters / max_iter
-    colored_img = cm.inferno(norm_iters)[:, :, :3]  # RGB from colormap
-    colored_img = (colored_img * 255).astype(np.uint8)
+    colored_img = (cm.inferno(norm_iters)[:, :, :3] * 255).astype(np.uint8)
 
     return julia_res(
         image=Image.fromarray(colored_img),
-        real=float(a), imaginary=float(b),
+        real=float(a),
+        imaginary=float(b),
         iters=max_iter,
         width=w,
-        height=h)
+        height=h
+    )

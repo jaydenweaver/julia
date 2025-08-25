@@ -31,12 +31,12 @@ async def get_julia_image_time(
     # check if user has access level for given size
     # just hard coded for now...
     # size xl is admin only
-    if size == 'xl':
+    if size == 'verybig':
         if not user or user['username'] != 'admin':
             return {'invalid permissions'}
 
     # only users can request large
-    if size == 'l' and not user:
+    if size == 'xxl' and not user:
         return {'invalid permissions'}
 
     # get cache key

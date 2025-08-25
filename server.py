@@ -15,7 +15,8 @@ app = FastAPI()
 @app.on_event("startup")
 def setup_directory():
     # reset stored images...
-    shutil.rmtree(SAVE_DIR)
+    if os.path.exists(SAVE_DIR):
+        shutil.rmtree(SAVE_DIR)
     os.makedirs(SAVE_DIR, exist_ok=True)
 
     # reset metadata

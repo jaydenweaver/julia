@@ -1,19 +1,29 @@
 from fastapi import FastAPI, Request, Query, Depends
+import json
 import os
 import shutil
 from src import auth
 from src import julia_time
 
-
 SAVE_DIR = "images"
 METADATA_FILE = "metadata.json"
 
-# delete old images...
-shutil.rmtree(SAVE_DIR)
-os.makedirs(SAVE_DIR, exist_ok=True)
-
 
 app = FastAPI()
+
+
+@app.on_event("startup")
+def setup_directory():
+    # reset stored images...
+    shutil.rmtree(SAVE_DIR)
+    os.makedirs(SAVE_DIR, exist_ok=True)
+
+    # reset metadata
+    if os.path.exists(METADATA_FILE):
+        os.remove(METADATA_FILE)
+
+    with open(METADATA_FILE, "w") as f:
+        json.dump({"fractals": []}, f, indent=4)
 
 
 @app.get("/time")

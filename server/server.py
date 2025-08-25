@@ -5,11 +5,12 @@ from src import auth
 from src import julia_time
 
 
-save_dir = "images"
+SAVE_DIR = "images"
+METADATA_FILE = "metadata.json"
 
 # delete old images...
-shutil.rmtree(save_dir)
-os.makedirs(save_dir, exist_ok=True)
+shutil.rmtree(SAVE_DIR)
+os.makedirs(SAVE_DIR, exist_ok=True)
 
 
 app = FastAPI()
@@ -23,7 +24,7 @@ async def get_julia_image_time(
         user=Depends(auth.optional_auth)
 ):
     return await julia_time.get_julia_image_time(country, city,
-                                                 size, user, save_dir)
+                                                 size, user, SAVE_DIR)
 
 
 @app.post("/login")

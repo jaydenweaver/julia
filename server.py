@@ -40,5 +40,5 @@ async def get_julia_image_time(
 
 
 @app.post("/login")
-async def login(Request: Request):
-    return await auth.login(Request)
+async def login(request: Request):
+    return await auth.login(request)

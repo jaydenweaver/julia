@@ -40,7 +40,7 @@ async def get_julia_image_time(
 
     # get cache key
     time_key = datetime.utcnow().strftime("%Y-%m-%d-%H-%M")
-    key = (country.lower(), city.lower(), size.lower(), time_key)
+    key = f"{country.lower()}_{city.lower()}_{size.lower()}_{time_key}"
 
     # check if we already have the request in cache
     if key in julia_cache:

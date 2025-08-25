@@ -33,6 +33,7 @@ Thumbs.db
 *.swp
 *.swo
 *.png
+*.json
 
 # Cache
 .cache/

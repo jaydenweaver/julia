@@ -13,7 +13,8 @@ async def get_julia_image_time(
         city: str = Query(...),
         size: str = Query(...),
         user=None,
-        save_dir="images"
+        save_dir="images",
+        metadata="metadata.json"
 ):
 
     # check if user has access level for given size

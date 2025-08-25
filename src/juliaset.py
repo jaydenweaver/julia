@@ -47,7 +47,7 @@ def hash_tuple(vals):
 async def map_to_julia_constants(country, city):
     val = await get_time(country, city)
     if val is None:
-        return (-0.7, 0.27015)
+        return (0.355, 0.355)
     hash_vals = hash_tuple(val)
     i = (hash_vals[0] & hash_vals[1] % len(julia_constants))
     a, b = julia_constants[i]["a"], julia_constants[i]["b"]
@@ -90,32 +90,34 @@ async def create_julia_image(country="", city="", size="m",
     y = np.linspace(center[1] - half_y, center[1] +
                     half_y, h, dtype=np.float32)
 
-    # preallocate result array
-    iters = np.zeros((h, w), dtype=np.uint16)
     C = np.complex64(complex(a, b))
+
+    img = Image.new("RGB", (w, h))
 
     for j, y_val in enumerate(y):
         # row-wise computation to save memory
-        Z_row = x + 1j * np.float32(y_val)
-        Z_row = Z_row.astype(np.complex64)
-        alive = np.ones(w, dtype=bool)
-        iters_row = np.zeros(w, dtype=np.uint16)
+        X_row = x.astype(np.complex64)
+        Y_row = np.full_like(X_row, y_val, dtype=np.float32)
+        Z = X_row + 1j * Y_row
+        iters_row = np.zeros(Z.shape, dtype=np.uint16)
+        alive = np.ones(Z.shape, dtype=bool)
 
         for i in range(max_iter):
-            Z_row[alive] = Z_row[alive] * Z_row[alive] + C
-            escaped = np.abs(Z_row) > 2.0
+            Z[alive] = Z[alive] * Z[alive] + C
+            escaped = np.abs(Z) > 2.0
             iters_row[escaped & alive] = i
             alive &= ~escaped
             if not alive.any():
                 break
 
-        iters[j, :] = iters_row
+        norm_row = iters_row / max_iter
+        colored_row = (cm.inferno(norm_row)[:, :3] * 255).astype(np.uint8)
 
-    norm_iters = iters / max_iter
-    colored_img = (cm.inferno(norm_iters)[:, :, :3] * 255).astype(np.uint8)
+        row_img = Image.fromarray(colored_row[np.newaxis, :, :], mode="RGB")
+        img.paste(row_img, (0, j))
 
     return julia_res(
-        image=Image.fromarray(colored_img),
+        image=img,
         real=float(a),
         imaginary=float(b),
         iters=max_iter,

@@ -5,6 +5,7 @@ from src.juliaset import create_julia_image, julia_res
 import os
 import json
 
+# move this to an external cache at some point (elasticache)
 julia_cache = {}
 
 

@@ -6,6 +6,7 @@ from botocore.exceptions import ClientError
 
 s3_bucket_name = os.getenv("S3_BUCKET_NAME")
 aws_region = os.getenv("AWS_REGION")
+presigned_url_expiry = os.getenv("PRESIGNED_URL_EXPIRY")
 
 s3_client = boto3.client("s3", region_name=aws_region)
 
@@ -31,7 +32,7 @@ def s3_get_presigned_url(key: str):
         res = s3_client.generate_presigned_url('get_object',
                                                Params={'Bucket': s3_bucket_name,
                                                        'Key': key},
-                                                ExpiresIn=3600)
+                                                ExpiresIn=presigned_url_expiry)
         return res
     except ClientError as e:
         return f"error, {e}"

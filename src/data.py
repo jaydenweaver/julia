@@ -4,6 +4,12 @@ import boto3
 import os
 from botocore.exceptions import ClientError
 
+import requests
+from pymemcache.client.base import Client
+
+memcached_endpoint = os.getenv(MEMCACHED_ENDPOINT)
+memcached_ttl = os.getenv(MEMCACHED_TTL)
+
 s3_bucket_name = os.getenv("S3_BUCKET_NAME")
 aws_region = os.getenv("AWS_REGION")
 presigned_url_expiry = os.getenv("PRESIGNED_URL_EXPIRY")
@@ -12,6 +18,7 @@ db_table_name = os.getenv("DB_TABLE_NAME")
 
 db_client = boto3.client("dynamodb", region_name=aws_region)
 s3_client = boto3.client("s3", region_name=aws_region)
+memcached_client = Client(memcached_endpoint)
 
 def s3_write(key: str, data):
     try:
@@ -59,3 +66,9 @@ def db_get(key):
         print("get response: ", res.get("Item"))
     except ClientError as e:
         print(e)
+
+def cache_filename(filename):
+    memcached_client.set(filename, "exists", expire=memcached_ttl)
+
+def cache_check_filename(filename):
+    return memcached_client.get(filename) is not None

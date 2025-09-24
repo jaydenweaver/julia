@@ -7,7 +7,10 @@ from botocore.exceptions import ClientError
 s3_bucket_name = os.getenv("S3_BUCKET_NAME")
 aws_region = os.getenv("AWS_REGION")
 presigned_url_expiry = os.getenv("PRESIGNED_URL_EXPIRY")
+qut_username = os.getenv("QUT_USERNAME")
+db_table_name = os.getenv("DB_TABLE_NAME")
 
+db_client = boto3.client("dynamodb", region_name=aws_region)
 s3_client = boto3.client("s3", region_name=aws_region)
 
 def s3_write(key: str, data):
@@ -36,3 +39,23 @@ def s3_get_presigned_url(key: str):
         return res
     except ClientError as e:
         return f"error, {e}"
+    
+def db_put(item):
+    try:
+        res = db_client.put_item(
+            TableName=db_table_name,
+            Item=item,
+        )
+        print("put response: ", res)
+    except ClientError as e:
+        print(e)
+
+def db_get(key):
+    try:
+        res = db_client.get_item(
+            TableName=db_table_name,
+            Key=key,
+        )
+        print("get response: ", res.get("Item"))
+    except ClientError as e:
+        print(e)

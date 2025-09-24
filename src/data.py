@@ -4,7 +4,6 @@ import boto3
 import os
 from botocore.exceptions import ClientError
 
-import requests
 from pymemcache.client.base import Client
 
 memcached_endpoint = os.getenv(MEMCACHED_ENDPOINT)

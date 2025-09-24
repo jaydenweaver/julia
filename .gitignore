@@ -2,7 +2,8 @@
 node_modules/
 uploads/
 __pycache__/
-images/
+images/ 
+venv/
 
 # Build output
 dist/

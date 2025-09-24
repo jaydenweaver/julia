@@ -3,8 +3,11 @@ from contextlib import asynccontextmanager
 import json
 import os
 import shutil
+from dotenv import load_dotenv
 from src import auth
 from src import julia_time
+
+load_dotenv()
 
 SAVE_DIR = "images"
 METADATA_FILE = "metadata.json"

@@ -1,13 +1,11 @@
 import jwt
 from datetime import datetime, timezone, timedelta
 import os
-from dotenv import load_dotenv
 from fastapi import HTTPException, Depends, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 security = HTTPBearer()
 
-load_dotenv()
 secret_key = os.getenv("SECRET_KEY")
 
 

@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request, Query, Depends
+from contextlib import asynccontextmanager
 import json
 import os
 import shutil
@@ -9,10 +10,6 @@ SAVE_DIR = "images"
 METADATA_FILE = "metadata.json"
 
 
-app = FastAPI()
-
-
-@app.on_event("startup")
 def setup_directory():
     # reset stored images...
     if os.path.exists(SAVE_DIR):
@@ -25,6 +22,14 @@ def setup_directory():
 
     with open(METADATA_FILE, "w") as f:
         json.dump({"fractals": []}, f, indent=4)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    setup_directory()
+    yield
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/time")

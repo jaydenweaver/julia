@@ -3,7 +3,7 @@
 import boto3
 import os
 from botocore.exceptions import ClientError
-
+from io import BytesIO
 from pymemcache.client.base import Client
 
 memcached_endpoint = os.getenv(MEMCACHED_ENDPOINT)
@@ -20,11 +20,14 @@ db_table = db_client.Table(db_table_name)
 s3_client = boto3.client("s3", region_name=aws_region)
 memcached_client = Client(memcached_endpoint)
 
-def s3_write(key: str, data):
+def s3_write_image(key: str, image_bytes):
     try:
-        res = s3_client.put_object(Bucket=s3_bucket_name,
-                                   Key=key,
-                                   Body=data)
+        res = s3_client.put_object(
+            Bucket=s3_bucket_name,
+            Key=key,
+            Body=image_bytes,                  
+            ContentType="image/png"
+        )
         print("put response: ", res)
     except ClientError as e:
         print(e)

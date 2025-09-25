@@ -1,10 +1,9 @@
 from fastapi import Query
 from fastapi.responses import FileResponse, StreamingResponse
-from io import BytesIO
 from datetime import datetime
 from julia_set import create_julia_image, julia_res
 from data import *
-import os
+from io import BytesIO
 import requests
 import json
 
@@ -47,8 +46,8 @@ async def get_julia_image_time(
             return {'failed to fetch image!'}
         
         return StreamingResponse(
-            BytesIO(res.content),
-            media_type="image/png"
+            res.iter_content(chunk_size=8192),
+            media_type=res.headers.get("Content-Type", "application/octet-stream")
         )
 
     # request not in storage, generate file...
@@ -56,11 +55,16 @@ async def get_julia_image_time(
     if req is None:
         return {'image creation failed'}
 
+    # create image buffer
+    buf = BytesIO()
+    req.image.save(buf, format="PNG") 
+    buf.seek(0)       
+
     file_name = f"{key}.png"
     cache_filename(file_name) # store in memcached
 
     # write image to s3
-    #s3_write(key)
+    s3_write_image(key=key, image_bytes=buf.getvalue())
 
     metadata = {
         "region": country,
@@ -74,6 +78,7 @@ async def get_julia_image_time(
         "file_name": file_name,
         "generated_at": datetime.now().isoformat()
     }
-    save_metadata(metadata_file, metadata) # replace with db_put(item)
+    db_put(metadata)                 
 
-    return FileResponse(file_path, media_type="image/png")
+    buf.seek(0)
+    return StreamingResponse(buf, media_type="image/png")

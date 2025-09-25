@@ -2,7 +2,9 @@ from fastapi import Query
 from fastapi.responses import FileResponse
 from datetime import datetime
 from julia_set import create_julia_image, julia_res
+from data import cache_check_filename, s3_get_presigned_url
 import os
+import requests
 import json
 
 # move this to an external cache at some point (elasticache)
@@ -44,13 +46,9 @@ async def get_julia_image_time(
     key = f"{country.lower()}_{city.lower()}_{size.lower()}_{time_key}"
 
     # check if we already have the request in cache
-    if key in julia_cache:
-        file_path = julia_cache[key]
-        if os.path.exists(file_path):
-            print(f"returning cached image! {file_path}")
-            return FileResponse(file_path, media_type="image/png")
-        else:
-            del julia_cache[key]
+    if cache_check_filename(key):
+        # return fetch from presigned url here
+        return requests.get(s3_get_presigned_url(key))
 
     req = await create_julia_image(country=country, city=city, size=size)
     if req is None:
@@ -62,7 +60,7 @@ async def get_julia_image_time(
     julia_cache[key] = file_path  # store in cache
 
     metadata = {
-        "region": country,  # need to rename country to region...
+        "region": country,
         "city": city,
         "size": size,
         "resolution": {"width": req.width,
@@ -73,6 +71,6 @@ async def get_julia_image_time(
         "file_name": file_name,
         "generated_at": datetime.now().isoformat()
     }
-    save_metadata(metadata_file, metadata)
+    save_metadata(metadata_file, metadata) # replace with db_put(item)
 
     return FileResponse(file_path, media_type="image/png")

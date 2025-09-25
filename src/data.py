@@ -15,7 +15,8 @@ presigned_url_expiry = os.getenv("PRESIGNED_URL_EXPIRY")
 qut_username = os.getenv("QUT_USERNAME")
 db_table_name = os.getenv("DB_TABLE_NAME")
 
-db_client = boto3.client("dynamodb", region_name=aws_region)
+db_client = boto3.resource("dynamodb", region_name=aws_region)
+db_table = db_client.Table(db_table_name)
 s3_client = boto3.client("s3", region_name=aws_region)
 memcached_client = Client(memcached_endpoint)
 
@@ -48,20 +49,14 @@ def s3_get_presigned_url(key: str):
     
 def db_put(item):
     try:
-        res = db_client.put_item(
-            TableName=db_table_name,
-            Item=item,
-        )
+        res = db_table.put_item(Item=item)
         print("put response: ", res)
     except ClientError as e:
         print(e)
 
 def db_get(key):
     try:
-        res = db_client.get_item(
-            TableName=db_table_name,
-            Key=key,
-        )
+        res = db_table.get_item(Key=key)
         print("get response: ", res.get("Item"))
     except ClientError as e:
         print(e)

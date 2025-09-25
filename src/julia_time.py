@@ -1,15 +1,12 @@
 from fastapi import Query
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
+from io import BytesIO
 from datetime import datetime
 from julia_set import create_julia_image, julia_res
-from data import cache_check_filename, s3_get_presigned_url
+from data import *
 import os
 import requests
 import json
-
-# move this to an external cache at some point (elasticache)
-julia_cache = {}
-
 
 def save_metadata(file: str, entry: dict):
     with open(file, "r+") as f:
@@ -25,9 +22,7 @@ async def get_julia_image_time(
         country: str = Query(...),
         city: str = Query(...),
         size: str = Query(...),
-        user=None,
-        save_dir="images",
-        metadata_file="metadata.json"
+        user=None
 ):
 
     # check if user has access level for given size
@@ -45,19 +40,27 @@ async def get_julia_image_time(
     time_key = datetime.utcnow().strftime("%Y-%m-%d-%H-%M")
     key = f"{country.lower()}_{city.lower()}_{size.lower()}_{time_key}"
 
-    # check if we already have the request in cache
+    # check if we already have the request in cache, return if true
     if cache_check_filename(key):
-        # return fetch from presigned url here
-        return requests.get(s3_get_presigned_url(key))
+        res = requests.get(s3_get_presigned_url(key))
+        if res.status_code != 200:
+            return {'failed to fetch image!'}
+        
+        return StreamingResponse(
+            BytesIO(res.content),
+            media_type="image/png"
+        )
 
+    # request not in storage, generate file...
     req = await create_julia_image(country=country, city=city, size=size)
     if req is None:
         return {'image creation failed'}
 
     file_name = f"{key}.png"
-    file_path = os.path.join(save_dir, file_name)
-    req.image.save(file_path)
-    julia_cache[key] = file_path  # store in cache
+    cache_filename(file_name) # store in memcached
+
+    # write image to s3
+    #s3_write(key)
 
     metadata = {
         "region": country,

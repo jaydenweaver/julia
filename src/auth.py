@@ -70,12 +70,13 @@ async def confirm(username: str, code: str):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-async def login(username: str, password: str):
+async def login(request):
+    data = await request.json()
     try:
         res = cognito_client.initiate_auth(
             ClientId=CLIENT_ID,
             AuthFlow="USER_PASSWORD_AUTH",
-            AuthParameters={"USERNAME": username, "PASSWORD": password},
+            AuthParameters={"USERNAME": data["username"], "PASSWORD": data["password"]},
         )
         return {
             "AccessToken": res["AuthenticationResult"]["AccessToken"],

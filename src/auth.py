@@ -2,7 +2,7 @@ import os
 import requests
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import jwt
+import jwt
 import boto3
 from botocore.exceptions import ClientError
 

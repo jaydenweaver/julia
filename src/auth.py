@@ -45,25 +45,27 @@ async def optional_auth(credentials: HTTPAuthorizationCredentials = Depends(HTTP
     return None
 
 
-async def signup(username: str, password: str, email: str):
+async def signup(request):
+    data = await request.json()
     try:
         res = cognito_client.sign_up(
             ClientId=CLIENT_ID,
-            Username=username,
-            Password=password,
-            UserAttributes=[{"Name": "email", "Value": email}],
+            Username=data["username"],
+            Password=data["password"],
+            UserAttributes=[{"Name": "email", "Value": data["email"]}],
         )
         return {"msg": "Sign-up successful, please confirm", "res": res}
     except ClientError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-async def confirm(username: str, code: str):
+async def confirm(request):
+    data = await request.json()
     try:
         res = cognito_client.confirm_sign_up(
             ClientId=CLIENT_ID,
-            Username=username,
-            ConfirmationCode=code,
+            Username=data["username"],
+            ConfirmationCode=data["code"],
         )
         return {"msg": "User confirmed", "res": res}
     except ClientError as e:

@@ -13,6 +13,7 @@ S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
 AWS_REGION = os.getenv("AWS_REGION")
 PRESIGNED_URL_EXPIRY = os.getenv("PRESIGNED_URL_EXPIRY")
 DB_TABLE_NAME = os.getenv("DB_TABLE_NAME")
+QUT_USERNAME = os.getenv("QUT_USERNAME")
 
 db_client = boto3.resource("dynamodb", region_name=AWS_REGION)
 db_table = db_client.Table(DB_TABLE_NAME)
@@ -49,16 +50,30 @@ def s3_get_presigned_url(key: str):
     except ClientError as e:
         return f"error, {e}"
     
-def db_put(item):
+def db_put(metadata):
     try:
-        res = db_table.put_item(Item=item)
+        res = db_table.put_item(
+            Item={
+                "qut-username": {"S": QUT_USERNAME},
+                "filename": {"S": metadata.file_name},
+                "region": {"S": metadata.country},
+                "city": {"S": metadata.city},
+                "size": {"S": metadata.size},
+                "generated_at": {"S": metadata.generated_at},
+            },
+        )
         return res
     except ClientError as e:
         print(e)
 
-def db_get(key):
+def db_get(filename):
     try:
-        res = db_table.get_item(Key=key)
+        res = db_table.get_item(
+            Key={
+                "qut-username": {"S": QUT_USERNAME},
+                "filename": {"S": filename},
+            },
+        )
         return res
     except ClientError as e:
         print(e)

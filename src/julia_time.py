@@ -24,15 +24,17 @@ async def get_julia_image_time(
         user=None
 ):
 
+    groups = user.get("cognito:groups", []) if user else []
+
     # check if user has access level for given size
     # just hard coded for now...
-    # size xl is admin only
-    if size == 'verybig':
-        if not user or user['username'] != 'admin':
+    # size m is admin only
+    if size == 'm':
+        if "Admins" not in groups:
             return {'invalid permissions'}
 
-    # only users can request large
-    if size == 'xxl' and not user:
+    # only users can request small
+    if size == 's' and not user:
         return {'invalid permissions'}
 
     # get cache key

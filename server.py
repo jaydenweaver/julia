@@ -1,19 +1,11 @@
 from fastapi import FastAPI, Request, Query, Depends
-from contextlib import asynccontextmanager
-import json
-import os
-import shutil
 from dotenv import load_dotenv
 from src import auth
 from src import julia_time
 
 load_dotenv()
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    yield
-
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 
 
 @app.get("/time")

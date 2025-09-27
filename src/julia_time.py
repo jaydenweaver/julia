@@ -40,10 +40,11 @@ async def get_julia_image_time(
     # get cache key
     time_key = datetime.utcnow().strftime("%Y-%m-%d-%H-%M")
     key = f"{country.lower()}_{city.lower()}_{size.lower()}_{time_key}"
+    file_name = f"{key}.png"
 
     # check if we already have the request in cache, return if true
-    if cache_check_filename(key):
-        print(f"filename, {key}, found in cache! fetching file from s3...")
+    if cache_check_filename(file_name):
+        print(f"filename, {file_name}, found in cache! fetching file from s3...")
         res = requests.get(s3_get_presigned_url(key))
         if res.status_code != 200:
             return {'failed to fetch image!'}
@@ -64,7 +65,6 @@ async def get_julia_image_time(
     req.image.save(buf, format="PNG") 
     buf.seek(0)       
 
-    file_name = f"{key}.png"
     cache_filename(file_name) # store in memcached
 
     # write image to s3

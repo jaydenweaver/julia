@@ -53,7 +53,7 @@ def db_put(metadata):
     try:
         res = db_table.put_item(
             Item={
-                "qut-username": {"S": QUT_USERNAME},
+                "qut-username": {"S": str(QUT_USERNAME)},
                 "filename": {"S": metadata["file_name"]},
                 "region": {"S": metadata["region"]},
                 "city": {"S": metadata["city"]},

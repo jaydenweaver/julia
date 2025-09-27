@@ -5,7 +5,10 @@ import httpx
 import hashlib
 import matplotlib.cm as cm
 import json
+import boto3
 from functools import lru_cache
+
+ssm = boto3.client("ssm")
 
 julia_res = namedtuple(
     "julia_res", ["image", "real", "imaginary",
@@ -15,11 +18,17 @@ with open("sets.json", "r") as f:
     julia_constants = json.load(f)
 
 
+external_api_response = ssm.get_parameter(
+    Name="/n10807144-a2/external-api",
+    WithDecryption=True
+)
+
+external_api_url = external_api_response["Parameter"]["Value"]
+
 # available time zones available at
 # https://timeapi.io/documentation/iana-timezones
 async def get_time(country, city):
-    url = f"https://timeapi.io/api/time/current/zone?timeZone={
-        country}%2F{city}"
+    url = f"{external_api_url}{country}%2F{city}"
     print(url)
     try:
         async with httpx.AsyncClient(timeout=15) as c:

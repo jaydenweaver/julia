@@ -7,6 +7,7 @@ import matplotlib.cm as cm
 import json
 import boto3
 from functools import lru_cache
+import os
 
 AWS_REGION = os.getenv("AWS_REGION")
 

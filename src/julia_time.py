@@ -43,6 +43,7 @@ async def get_julia_image_time(
 
     # check if we already have the request in cache, return if true
     if cache_check_filename(key):
+        print(f"filename, {key}, found in cache! fetching file from s3...")
         res = requests.get(s3_get_presigned_url(key))
         if res.status_code != 200:
             return {'failed to fetch image!'}
@@ -53,6 +54,7 @@ async def get_julia_image_time(
         )
 
     # request not in storage, generate file...
+    print(f"filename, {key}, not found in cache! generating image...")
     req = await create_julia_image(country=country, city=city, size=size)
     if req is None:
         return {'image creation failed'}

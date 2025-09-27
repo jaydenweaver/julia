@@ -27,7 +27,7 @@ def s3_write_image(key: str, image_bytes):
             Body=image_bytes,                  
             ContentType="image/png"
         )
-        print(f"wrote image to s3!:\n{res}")
+        print("wrote image to s3!")
         return res
     except ClientError as e:
         print(e)
@@ -36,7 +36,7 @@ def s3_delete(key: str):
     try: 
         res = s3_client.delete_object(Bucket=S3_BUCKET_NAME,
                                       Key=key)
-        print(f"deleted s3 object!:\n{res}")
+        print("deleted s3 object!")
         return res
     except ClientError as e:
         print(e)
@@ -47,7 +47,7 @@ def s3_get_presigned_url(key: str):
                                                Params={'Bucket': S3_BUCKET_NAME,
                                                        'Key': key},
                                                 ExpiresIn=PRESIGNED_URL_EXPIRY)
-        print(f"fetched presigned url!:\n{res}")
+        print("fetched presigned url!")
         return res
     except ClientError as e:
         return f"error, {e}"
@@ -64,7 +64,7 @@ def db_put(metadata):
                 "generated_at": metadata["generated_at"],
             },
         )
-        print(f"added metadata to dynamodb!:\n{res}")
+        print("added metadata to dynamodb!")
         return res
     except ClientError as e:
         print(e)

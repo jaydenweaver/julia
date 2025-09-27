@@ -3,7 +3,6 @@
 import boto3
 import os
 from botocore.exceptions import ClientError
-from io import BytesIO
 from pymemcache.client.base import Client
 
 MEMCACHED_ENDPOINT = os.getenv("MEMCACHED_ENDPOINT")

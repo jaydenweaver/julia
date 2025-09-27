@@ -1,7 +1,7 @@
 from fastapi import Query
 from fastapi.responses import FileResponse, StreamingResponse
 from datetime import datetime
-from julia_set import create_julia_image, julia_res
+from src.julia_set import create_julia_image
 from data import *
 from io import BytesIO
 import requests

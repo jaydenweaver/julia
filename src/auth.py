@@ -1,10 +1,11 @@
 import os
 import requests
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 import boto3
 from botocore.exceptions import ClientError
+
 
 router = APIRouter()
 
@@ -45,21 +46,23 @@ async def optional_auth(credentials: HTTPAuthorizationCredentials = Depends(HTTP
     return None
 
 
-async def signup(request):
+async def signup(request: Request):
     data = await request.json()
     try:
         res = cognito_client.sign_up(
             ClientId=CLIENT_ID,
             Username=data["username"],
             Password=data["password"],
-            UserAttributes=[{"Name": "email", "Value": data["email"]}],
+            UserAttributes=[
+                {"Name": "email", "Value": data["email"]}
+            ],
         )
         return {"msg": "Sign-up successful, please confirm", "res": res}
     except ClientError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-async def confirm(request):
+async def confirm(request: Request):
     data = await request.json()
     try:
         res = cognito_client.confirm_sign_up(
@@ -72,19 +75,53 @@ async def confirm(request):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-async def login(request):
+async def login(request: Request):
     data = await request.json()
+    username = data.get("username")
+    password = data.get("password")
+    mfa_code = data.get("mfa_code")
+    session = data.get("session")
+
     try:
-        res = cognito_client.initiate_auth(
-            ClientId=CLIENT_ID,
-            AuthFlow="USER_PASSWORD_AUTH",
-            AuthParameters={"USERNAME": data["username"], "PASSWORD": data["password"]},
-        )
-        return {
-            "AccessToken": res["AuthenticationResult"]["AccessToken"],
-            "IdToken": res["AuthenticationResult"]["IdToken"],
-            "RefreshToken": res["AuthenticationResult"]["RefreshToken"],
-            "ExpiresIn": res["AuthenticationResult"]["ExpiresIn"],
-        }
+        if mfa_code and session:
+            response = cognito_client.respond_to_auth_challenge(
+                ClientId=CLIENT_ID,
+                ChallengeName="EMAIL_OTP",
+                Session=session,
+                ChallengeResponses={
+                    "USERNAME": username,
+                    "EMAIL_OTP": mfa_code
+                }
+            )
+        else:
+            if not password:
+                raise HTTPException(status_code=400, detail="Password is required for first step")
+
+            response = cognito_client.initiate_auth(
+                AuthFlow="USER_PASSWORD_AUTH",
+                AuthParameters={
+                    "USERNAME": username,
+                    "PASSWORD": password
+                },
+                ClientId=CLIENT_ID
+            )
+
+        if "ChallengeName" in response and response["ChallengeName"] in ["SOFTWARE_TOKEN_MFA", "SMS_MFA"]:
+            return {
+                "mfa_required": True,
+                "challenge_name": response["ChallengeName"],
+                "session": response["Session"]
+            }
+
+        if "AuthenticationResult" in response:
+            return {
+                "mfa_required": False,
+                "id_token": response["AuthenticationResult"]["IdToken"],
+                "access_token": response["AuthenticationResult"]["AccessToken"],
+                "refresh_token": response["AuthenticationResult"]["RefreshToken"]
+            }
+
+        raise HTTPException(status_code=500, detail="Unexpected Cognito response")
+
     except ClientError as e:
-        raise HTTPException(status_code=401, detail="Login failed: " + str(e))
+        raise HTTPException(status_code=400, detail=e.response["Error"]["Message"])

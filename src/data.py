@@ -6,7 +6,7 @@ from botocore.exceptions import ClientError
 from pymemcache.client.base import Client
 
 MEMCACHED_ENDPOINT = os.getenv("MEMCACHED_ENDPOINT")
-MEMCACHED_TTL = os.getenv("MEMCACHED_TTL")
+MEMCACHED_TTL = int(os.getenv("MEMCACHED_TTL"))
 
 S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
 AWS_REGION = os.getenv("AWS_REGION")

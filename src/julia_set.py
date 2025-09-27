@@ -8,7 +8,9 @@ import json
 import boto3
 from functools import lru_cache
 
-ssm = boto3.client("ssm")
+AWS_REGION = os.getenv("AWS_REGION")
+
+cognito_client = boto3.client("cognito-idp", region_name=AWS_REGION)
 
 julia_res = namedtuple(
     "julia_res", ["image", "real", "imaginary",

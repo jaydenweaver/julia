@@ -32,13 +32,12 @@ external_api_url = external_api_response["Parameter"]["Value"]
 # https://timeapi.io/documentation/iana-timezones
 async def get_time(country, city):
     url = f"{external_api_url}{country}%2F{city}"
-    print(url)
+    print(f"fetching external api at: {url}")
     try:
         async with httpx.AsyncClient(timeout=15) as c:
             res = await c.get(url)
             res.raise_for_status()
             data = res.json()
-            print(data)
             return data['date'], data['time']
     except httpx.HTTPError as e:
         print(f"api request failed: {e}")

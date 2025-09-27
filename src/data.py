@@ -27,6 +27,7 @@ def s3_write_image(key: str, image_bytes):
             Body=image_bytes,                  
             ContentType="image/png"
         )
+        print(f"wrote image to s3!:\n{res}")
         return res
     except ClientError as e:
         print(e)
@@ -35,6 +36,7 @@ def s3_delete(key: str):
     try: 
         res = s3_client.delete_object(Bucket=S3_BUCKET_NAME,
                                       Key=key)
+        print(f"deleted s3 object!:\n{res}")
         return res
     except ClientError as e:
         print(e)
@@ -45,6 +47,7 @@ def s3_get_presigned_url(key: str):
                                                Params={'Bucket': S3_BUCKET_NAME,
                                                        'Key': key},
                                                 ExpiresIn=PRESIGNED_URL_EXPIRY)
+        print(f"fetched presigned url!:\n{res}")
         return res
     except ClientError as e:
         return f"error, {e}"
@@ -61,6 +64,7 @@ def db_put(metadata):
                 "generated_at": metadata["generated_at"],
             },
         )
+        print(f"added metadata to dynamodb!:\n{res}")
         return res
     except ClientError as e:
         print(e)
@@ -73,12 +77,18 @@ def db_get(filename):
                 "filename": {"S": filename},
             },
         )
+        print(f"fetched metadata from dynamodb!:\n{res}")
         return res
     except ClientError as e:
         print(e)
 
 def cache_filename(filename):
-    memcached_client.set(filename, "exists", expire=MEMCACHED_TTL)
+    res = memcached_client.set(filename, "exists", expire=MEMCACHED_TTL)
+    if res:
+        print(f"cached filename, '{filename}', to elasticache!")
+    else:
+        print(f"failed to cache filename, '{filename}'!")
+    
 
 def cache_check_filename(filename):
     return memcached_client.get(filename) is not None

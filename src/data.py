@@ -55,7 +55,7 @@ def db_put(metadata):
             Item={
                 "qut-username": {"S": QUT_USERNAME},
                 "filename": {"S": metadata["file_name"]},
-                "region": {"S": metadata["country"]},
+                "region": {"S": metadata["region"]},
                 "city": {"S": metadata["city"]},
                 "size": {"S": metadata["size"]},
                 "generated_at": {"S": metadata["generated_at"]},

@@ -10,7 +10,7 @@ from functools import lru_cache
 
 AWS_REGION = os.getenv("AWS_REGION")
 
-cognito_client = boto3.client("cognito-idp", region_name=AWS_REGION)
+ssm = boto3.client("ssm", region_name=AWS_REGION)
 
 julia_res = namedtuple(
     "julia_res", ["image", "real", "imaginary",

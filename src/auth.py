@@ -45,7 +45,9 @@ def get_public_key(token: str):
 def get_secret_hash(username: str) -> str:
     message = username + CLIENT_ID
     get_secret_res = secrets_client.get_secret_value(SecretId="JULIA_CLIENT_SECRET")
-    client_secret = get_secret_res.get('SecretString')
+    secret_string = get_secret_res["SecretString"]
+    secret_dict = json.loads(secret_string)
+    client_secret = secret_dict["COGNITO_CLIENT_SECRET"]
     dig = hmac.new(
         client_secret.encode("utf-8"),
         msg=message.encode("utf-8"),

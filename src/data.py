@@ -73,8 +73,8 @@ def db_get(filename):
     try:
         res = db_table.get_item(
             Key={
-                "qut-username": {"S": QUT_USERNAME},
-                "filename": {"S": filename},
+                "qut-username": QUT_USERNAME,
+                "filename": filename,
             },
         )
         print(f"fetched metadata from dynamodb!:\n{res}")

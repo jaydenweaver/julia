@@ -113,12 +113,12 @@ async def login(request: Request):
         if mfa_code and session:
             response = cognito_client.respond_to_auth_challenge(
                 ClientId=CLIENT_ID,
-                SecretHash=get_secret_hash(username),
                 ChallengeName="EMAIL_OTP",
                 Session=session,
                 ChallengeResponses={
                     "USERNAME": username,
-                    "EMAIL_OTP": mfa_code
+                    "EMAIL_OTP": mfa_code,
+                    "SECRET_HASH": get_secret_hash(username)
                 }
             )
         else:

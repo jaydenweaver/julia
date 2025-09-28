@@ -49,6 +49,8 @@ async def get_julia_image_time(
         if res.status_code != 200:
             return {'failed to fetch image!'}
         
+        db_get(file_name)
+
         return StreamingResponse(
             res.iter_content(chunk_size=8192),
             media_type=res.headers.get("Content-Type", "application/octet-stream")

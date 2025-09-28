@@ -19,10 +19,16 @@ CLIENT_ID = os.getenv("COGNITO_CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 
 cognito_client = boto3.client("cognito-idp", region_name=AWS_REGION)
+ssm = boto3.client("ssm", region_name=AWS_REGION)
 
 security = HTTPBearer()
 
-JWKS_URL = f"https://cognito-idp.{AWS_REGION}.amazonaws.com/{USER_POOL_ID}/.well-known/jwks.json"
+jwks_url_response = ssm.get_parameter(
+    Name="/n10807144-a2/jwks-url",
+    WithDecryption=True
+)
+
+JWKS_URL = jwks_url_response["Parameter"]["Value"]
 JWKS = requests.get(JWKS_URL).json()
 
 def get_public_key(token: str):

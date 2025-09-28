@@ -30,7 +30,7 @@ async def get_julia_image_time(
     # just hard coded for now...
     # size m is admin only
     if size == 'm':
-        if "Admins" not in groups:
+        if "admin" not in groups:
             return {'invalid permissions'}
 
     # only users can request small

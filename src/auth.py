@@ -5,13 +5,18 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 import boto3
 from botocore.exceptions import ClientError
-
+import hmac
+import hashlib
+import base64
+import json
+from jose import jwt
 
 router = APIRouter()
 
 AWS_REGION = os.getenv("AWS_REGION")
 USER_POOL_ID = os.getenv("COGNITO_USER_POOL_ID")
 CLIENT_ID = os.getenv("COGNITO_CLIENT_ID")
+CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 
 cognito_client = boto3.client("cognito-idp", region_name=AWS_REGION)
 
@@ -20,6 +25,25 @@ security = HTTPBearer()
 JWKS_URL = f"https://cognito-idp.{AWS_REGION}.amazonaws.com/{USER_POOL_ID}/.well-known/jwks.json"
 JWKS = requests.get(JWKS_URL).json()
 
+def get_public_key(token: str):
+    headers = jwt.get_unverified_header(token)
+    kid = headers["kid"]
+
+    key = next((k for k in JWKS["keys"] if k["kid"] == kid), None)
+    if not key:
+        raise HTTPException(status_code=401, detail="Public key not found in JWKS")
+    return key
+
+
+
+def get_secret_hash(username: str) -> str:
+    message = username + CLIENT_ID
+    dig = hmac.new(
+        CLIENT_SECRET.encode("utf-8"),
+        msg=message.encode("utf-8"),
+        digestmod=hashlib.sha256,
+    ).digest()
+    return base64.b64encode(dig).decode()
 
 def authenticate_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     if not credentials or credentials.scheme != "Bearer":
@@ -27,9 +51,10 @@ def authenticate_token(credentials: HTTPAuthorizationCredentials = Depends(secur
 
     token = credentials.credentials
     try:
+        key = get_public_key(token)
         claims = jwt.decode(
             token,
-            JWKS,
+            key,
             algorithms=["RS256"],
             audience=CLIENT_ID,
         )
@@ -51,6 +76,7 @@ async def signup(request: Request):
     try:
         res = cognito_client.sign_up(
             ClientId=CLIENT_ID,
+            SecretHash=get_secret_hash(data["username"]),
             Username=data["username"],
             Password=data["password"],
             UserAttributes=[
@@ -67,6 +93,7 @@ async def confirm(request: Request):
     try:
         res = cognito_client.confirm_sign_up(
             ClientId=CLIENT_ID,
+            SecretHash=get_secret_hash(data["username"]),
             Username=data["username"],
             ConfirmationCode=data["code"],
         )
@@ -86,6 +113,7 @@ async def login(request: Request):
         if mfa_code and session:
             response = cognito_client.respond_to_auth_challenge(
                 ClientId=CLIENT_ID,
+                SecretHash=get_secret_hash(username),
                 ChallengeName="EMAIL_OTP",
                 Session=session,
                 ChallengeResponses={
@@ -101,7 +129,8 @@ async def login(request: Request):
                 AuthFlow="USER_PASSWORD_AUTH",
                 AuthParameters={
                     "USERNAME": username,
-                    "PASSWORD": password
+                    "PASSWORD": password,
+                    "SECRET_HASH":get_secret_hash(username),
                 },
                 ClientId=CLIENT_ID
             )

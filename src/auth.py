@@ -117,7 +117,7 @@ async def login(request: Request):
                 Session=session,
                 ChallengeResponses={
                     "USERNAME": username,
-                    "EMAIL_OTP": mfa_code,
+                    "EMAIL_OTP_CODE": mfa_code,
                     "SECRET_HASH": get_secret_hash(username)
                 }
             )

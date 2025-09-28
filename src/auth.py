@@ -135,11 +135,11 @@ async def login(request: Request):
                 ClientId=CLIENT_ID
             )
 
-        if "ChallengeName" in response and response["ChallengeName"] in ["SOFTWARE_TOKEN_MFA", "SMS_MFA"]:
+        if "ChallengeName" in response:
             return {
                 "mfa_required": True,
                 "challenge_name": response["ChallengeName"],
-                "session": response["Session"]
+                "session": response.get("Session")
             }
 
         if "AuthenticationResult" in response:

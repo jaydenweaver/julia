@@ -16,9 +16,9 @@ router = APIRouter()
 AWS_REGION = os.getenv("AWS_REGION")
 USER_POOL_ID = os.getenv("COGNITO_USER_POOL_ID")
 CLIENT_ID = os.getenv("COGNITO_CLIENT_ID")
-CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 
 cognito_client = boto3.client("cognito-idp", region_name=AWS_REGION)
+secrets_client = boto3.client("secretsmanager", region_name=AWS_REGION)
 ssm = boto3.client("ssm", region_name=AWS_REGION)
 
 security = HTTPBearer()
@@ -44,8 +44,10 @@ def get_public_key(token: str):
 
 def get_secret_hash(username: str) -> str:
     message = username + CLIENT_ID
+    get_secret_res = secrets_client.get_secret_value(SecretId="JULIA_CLIENT_SECRET")
+    client_secret = get_secret_res.get('SecretString')
     dig = hmac.new(
-        CLIENT_SECRET.encode("utf-8"),
+        client_secret.encode("utf-8"),
         msg=message.encode("utf-8"),
         digestmod=hashlib.sha256,
     ).digest()

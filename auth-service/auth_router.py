@@ -3,6 +3,13 @@ from . import auth_service
 
 app = FastAPI()
 
+@app.post("/verify-token")
+async def verify_token(request: Request):
+    data = await request.json()
+    token = data.get("token")
+    claims = auth_service.authenticate_token_from_string(token)
+    return claims
+
 @app.post("/signup")
 async def signup(request: Request):
     data = await request.json()

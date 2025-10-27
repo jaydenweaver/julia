@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 import httpx
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+import os
 
 load_dotenv()
 
@@ -11,11 +12,25 @@ app = FastAPI()
 AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL")
 COMPUTE_SERVICE_URL = os.getenv("COMPUTE_SERVICE_URL")
 
+security = HTTPBearer(auto_error=False)
 
-async def optional_auth(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer(auto_error=False))):
-    if credentials:
-        return authenticate_token(credentials)
-    return None
+async def optional_auth(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    if not credentials:
+        return None
+
+    token = credentials.credentials
+    async with httpx.AsyncClient() as client:
+        try:
+            res = await client.post(
+                f"{AUTH_SERVICE_URL}/verify-token",
+                json={"token": token}
+            )
+            res.raise_for_status()
+            return res.json()
+        except httpx.HTTPStatusError as e:
+            return None
+        except Exception as e:
+            return None
 
 @app.get("/time")
 async def get_julia_image_time(

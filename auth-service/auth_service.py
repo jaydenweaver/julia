@@ -66,6 +66,11 @@ def authenticate_token(credentials: HTTPAuthorizationCredentials):
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {e}")
 
+def authenticate_token_from_string(token: str):
+    class Credentials:
+        scheme = "Bearer"
+        credentials = token
+    return authenticate_token(Credentials())
 
 def cognito_signup(username: str, password: str, email: str):
     return cognito_client.sign_up(

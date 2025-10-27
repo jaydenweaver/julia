@@ -1,46 +1,32 @@
 from fastapi import FastAPI, Query
-from fastapi.responses import StreamingResponse
-from io import BytesIO
 from datetime import datetime
-import base64
-import httpx
+import json
+import boto3
 import os
+from dotenv import load_dotenv
+import httpx
 
-from compute_service import create_julia_image
+load_dotenv()
 
-os.loadenv()
 DATA_SERVICE_URL = os.getenv("DATA_SERVICE_URL")
+AWS_REGION = os.getenv("AWS_REGION", "ap-southeast-2")
+SQS_QUEUE_URL = os.getenv("SQS_QUEUE_URL")
 
+sqs = boto3.client("sqs", region_name=AWS_REGION)
 app = FastAPI()
-
-async def upload_image(key: str, image_bytes: bytes):
-    img_b64 = base64.b64encode(image_bytes).decode("utf-8")
-    async with httpx.AsyncClient() as client:
-        await client.post(f"{DATA_SERVICE_URL}/s3/upload", json={
-            "key": key,
-            "image_base64": img_b64
-        })
 
 
 async def get_presigned_url(key: str):
     async with httpx.AsyncClient() as client:
         res = await client.get(f"{DATA_SERVICE_URL}/s3/url/{key}")
+        res.raise_for_status()
         return res.json().get("url")
-
-
-async def put_metadata(metadata: dict):
-    async with httpx.AsyncClient() as client:
-        await client.post(f"{DATA_SERVICE_URL}/db/put", json=metadata)
-
-
-async def cache_file(filename: str):
-    async with httpx.AsyncClient() as client:
-        await client.post(f"{DATA_SERVICE_URL}/cache/{filename}")
 
 
 async def check_cache(filename: str):
     async with httpx.AsyncClient() as client:
         res = await client.get(f"{DATA_SERVICE_URL}/cache/{filename}")
+        res.raise_for_status()
         return res.json().get("exists", False)
 
 
@@ -51,8 +37,13 @@ async def generate_julia(
     size: str = Query(...),
     user: dict = None
 ):
+    """
+    Queues a Julia image generation task in SQS.
+    Returns immediately. If cached, returns presigned URL instead.
+    """
     groups = user.get("cognito:groups", []) if user else []
 
+    # permissions
     if size == "m" and "admin" not in groups:
         return {"error": "invalid permissions"}
     if size == "s" and not user:
@@ -61,34 +52,28 @@ async def generate_julia(
     time_key = datetime.utcnow().strftime("%Y-%m-%d-%H-%M")
     file_name = f"{country.lower()}_{city.lower()}_{size.lower()}_{time_key}.png"
 
-    # check cache
+    # check cache first
     if await check_cache(file_name):
         url = await get_presigned_url(file_name)
-        return StreamingResponse(
-            httpx.stream("GET", url),
-            media_type="image/png"
-        )
+        return {"status": "cached", "url": url}
 
-    # generate image
-    result = await create_julia_image(country, city, size)
-    buf = BytesIO()
-    result.image.save(buf, format="PNG")
-    buf.seek(0)
-
-    # cache, upload to s3, save metadata
-    await cache_file(file_name)
-    await upload_image(file_name, buf.getvalue())
-
-    metadata = {
-        "file_name": file_name,
-        "region": country,
+    # queue compute task
+    task = {
+        "action": "create_julia_image",
+        "country": country,
         "city": city,
         "size": size,
-        "resolution": {"width": result.width, "height": result.height},
-        "params": {"real": result.real, "imaginary": result.imaginary, "iterations": result.iters},
-        "generated_at": datetime.utcnow().isoformat()
+        "file_name": file_name,
+        "requested_at": datetime.utcnow().isoformat()
     }
-    await put_metadata(metadata)
 
-    buf.seek(0)
-    return StreamingResponse(buf, media_type="image/png")
+    sqs.send_message(
+        QueueUrl=SQS_QUEUE_URL,
+        MessageBody=json.dumps(task)
+    )
+
+    return {
+        "status": "queued",
+        "file_name": file_name,
+        "message": f"julia compute task queued for {file_name}"
+    }

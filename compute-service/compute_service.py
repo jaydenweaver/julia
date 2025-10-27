@@ -7,6 +7,7 @@ from collections import namedtuple
 from functools import lru_cache
 from datetime import datetime
 from io import BytesIO
+import asyncio
 
 import numpy as np
 from PIL import Image
@@ -46,7 +47,7 @@ async def get_time(country, city):
             data = res.json()
             return data["date"], data["time"]
     except Exception as e:
-        print(f"[WARN] Failed to get time for {city}, {country}: {e}")
+        print(f"failed to get time for {city}, {country}: {e}")
     return None
 
 
@@ -158,11 +159,10 @@ async def process_message(task):
     }
     await put_metadata(metadata)
 
-    print(f"✅ Completed Julia image {file_name}")
+    print(f"completed Julia image {file_name}")
 
 
-def poll_sqs():
-    import asyncio
+async def poll_sqs():
     while True:
         messages = sqs.receive_message(
             QueueUrl=SQS_QUEUE_URL,
@@ -171,14 +171,19 @@ def poll_sqs():
         ).get("Messages", [])
 
         if not messages:
+            await asyncio.sleep(1)
             continue
 
         for msg in messages:
-            body = json.loads(msg["Body"])
-            asyncio.run(process_message(body))
-            sqs.delete_message(
-                QueueUrl=SQS_QUEUE_URL,
-                ReceiptHandle=msg["ReceiptHandle"]
-            )
+            try:
+                body = json.loads(msg["Body"])
+                await process_message(body)
+                sqs.delete_message(
+                    QueueUrl=SQS_QUEUE_URL,
+                    ReceiptHandle=msg["ReceiptHandle"]
+                )
+            except Exception as e:
+                print(f"Failed to process message: {e}")
 
-poll_sqs()
+if __name__ == "__main__":
+    asyncio.run(poll_sqs())

@@ -2,3 +2,7 @@ fastapi==0.114.0
 uvicorn==0.35.0
 httpx==0.24.1
 python-dotenv==1.0.1
+boto3==1.28.61
+botocore==1.31.61
+pydantic==2.11.7
+pydantic_core==2.33.2

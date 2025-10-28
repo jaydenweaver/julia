@@ -13,7 +13,6 @@ load_dotenv()
 app = FastAPI()
 
 AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL")
-COMPUTE_SERVICE_URL = os.getenv("COMPUTE_SERVICE_URL")
 DATA_SERVICE_URL = os.getenv("DATA_SERVICE_URL")
 SQS_QUEUE_URL = os.getenv("SQS_QUEUE_URL")
 AWS_REGION = os.getenv("AWS_REGION", "ap-southeast-2")

@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, Query, Depends, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response
 from dotenv import load_dotenv
 import httpx
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -27,21 +27,19 @@ async def get_image(file_name: str):
         try:
             res = await client.get(f"{DATA_SERVICE_URL}/s3/url/{file_name}")
             res.raise_for_status()
-            data = res.json()
-            url = data.get("url")
+            url = res.json().get("url")
+            if not url:
+                raise HTTPException(status_code=404, detail=f"No URL found for file: {file_name}")
+
+            image_res = await client.get(url)
+            image_res.raise_for_status()
+
+            return Response(content=image_res.content, media_type="image/png")
+
         except httpx.HTTPStatusError as e:
-            raise HTTPException(status_code=e.response.status_code,
-                                detail=f"Failed to get presigned URL: {e.response.text}")
+            raise HTTPException(status_code=e.response.status_code, detail=str(e))
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-
-        if not url:
-            raise HTTPException(status_code=404, detail=f"No URL found for file: {file_name}")
-
-        try:
-            return StreamingResponse(client.stream("GET", url), media_type="image/png")
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to stream image: {str(e)}")
 
 async def optional_auth(credentials: HTTPAuthorizationCredentials = Depends(security)):
     if not credentials:
